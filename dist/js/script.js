@@ -215,6 +215,7 @@
       
         }
       // update calculated price in the HTML
+      thisProduct.priceSingle = price;
       price *= thisProduct.amountWidget.value;
       thisProduct.priceElem.innerHTML = price;
         }
@@ -231,9 +232,49 @@
 
   addToCart(){
     const thisProduct = this;
+    
 
-    app.cart.add(thisProduct);
+    //app.cart.add(thisProduct);// przekazanie do thisApp.cart.add całego obietku czyli instancji thisProduct
+    app.cart.add(thisProduct.prepareCartProduct());// przekazanie do thisApp.cart.add (okrojnej instacji), czyli to co zwróci thisProduct.prepareCartProduct
   }
+
+  prepareCartProduct(){
+    const thisProduct = this;
+    const productSummary = {
+      id: thisProduct.id,
+      name: thisProduct.data.name,
+      amount: thisProduct.amountWidget.value,
+      priceSingle: thisProduct.priceSingle,
+      price: thisProduct.priceSingle * thisProduct.amountWidget.value,
+      params: thisProduct.prepareCartProductParam()
+    };
+    return productSummary;
+  }
+
+  prepareCartProductParam(){
+    const thisProduct = this;
+    const  params = {};
+    const formData = utils.serializeFormToObject(thisProduct.form);
+    for(let paramId in thisProduct.data.params){
+      const param = thisProduct.data.params[paramId];
+      params[paramId] = {
+        label: param.label,
+        options:{}
+      }
+      for(let optionId in param.options){
+        const option = param.options[optionId];
+        const optionSelected = formData[paramId] && formData[paramId].includes(optionId);
+        if(optionSelected){
+          params[paramId].options[optionId] = option.label;
+          //console.log(params);
+        }
+      }
+    }
+
+    
+    return params ;  
+  }
+  
 }
 
   class AmountWidget{
@@ -267,8 +308,9 @@
       thisWidget.value = newValue;
       }
       thisWidget.input.value = thisWidget.value;
-
       thisWidget.announce();
+
+     
     }
 
     initActions(){
@@ -313,9 +355,9 @@
       const thisCart = this;
 
       thisCart.dom = {}; // Tworzymy obiekt z elementami DOM od tej pory  w nim przechowujemy referencje do elementów DOM
-
       thisCart.dom.wrapper = element;
       thisCart.dom.toggleTrigger = document.querySelector(select.cart.toggleTrigger);
+      thisCart.dom.productList = document.querySelector(select.cart.productList);
 
     }
 
@@ -327,10 +369,71 @@
     }
 
     add(menuProduct){ // wysyłanie produktów do koszyka
-      // const thisCart = this;
+      const thisCart = this;
+      console.log(menuProduct);
+      
 
+      const generatedHtml = templates.cartProduct(menuProduct); //generowanie kodu html pojedynczego produktu w koszyku
+      //console.log(generatedHtml);
+      const generatedDOM = utils.createDOMFromHTML(generatedHtml); // tworzenie elementu dom, tzn. przekształcenie kodu HTML, który jest zwykłym stringiem na obiekt, który ma właściowości czy metody
+      //console.log(generatedDOM);
+      thisCart.dom.productList.appendChild(generatedDOM);
+      
       console.log('adding product', menuProduct);
+
+      thisCart.products.push(new CartProduct(menuProduct, generatedDOM)); // W ten sposób jednocześnie stworzymy nową instancję klasy new CartProduct oraz dodamy ją do tablicy thisCart.products 
+      console.log('thisCart.products', thisCart.products);
+     
     }
+
+    
+  }
+
+  class CartProduct{
+    constructor(menuProduct, element){ //element jest referencja do generatedHtml menuProduct referencją do obiektu podsumowania produktu
+      const thisCartProduct = this;
+      thisCartProduct.getElements(element);
+      thisCartProduct.initAmountWidget();
+      console.log('thisCartProduct:', thisCartProduct);
+      
+      thisCartProduct.id = menuProduct.id;
+      thisCartProduct.name = menuProduct.name;
+      thisCartProduct.amount = menuProduct.amount; // liczba sztuk wybrana przed dodaniem do koszyka
+      thisCartProduct.priceSingle = menuProduct.priceSingle;
+      thisCartProduct.price = menuProduct.price;
+      thisCartProduct.params = menuProduct.params;
+      
+
+
+    }
+
+    getElements(element){
+      const thisCartProduct = this;
+      thisCartProduct.dom = {};
+      thisCartProduct.dom.wrapper = element;
+      thisCartProduct.dom.amountWidget = document.querySelector(select.cartProduct.amountWidget);
+      thisCartProduct.dom.price = document.querySelector(select.cartProduct.price);
+      thisCartProduct.dom.edit = document.querySelector(select.cartProduct.edit);
+      thisCartProduct.dom.remove = document.querySelector(select.cartProduct.remove);
+
+      
+
+
+    }
+
+    initAmountWidget(){
+      const thisCartProduct = this;
+      
+      thisCartProduct.amountWidget = new AmountWidget(thisCartProduct.dom.amountWidget); // nowa instancja klasy AmountWidget w klasie CartProduct
+
+      thisCartProduct.dom.amountWidget.addEventListener('update', function(){
+        thisCartProduct.amount = thisCartProduct.amountWidget.value // zmiana ilości sztuk w koszyku
+        thisCartProduct.price = thisCartProduct.amount * thisCartProduct.priceSingle
+        thisCartProduct.dom.price.innerHTML = thisCartProduct.price;
+
+      })
+    }
+
   }
 
   
@@ -357,6 +460,7 @@
       const thisApp = this;
 
       const cartElem = document.querySelector(select.containerOf.cart);
+      //console.log(cartElem);
       thisApp.cart = new Cart(cartElem); //instancję klasy Cart zapisaliśmy w thisApp.cart. Oznacza to, że poza obiektem app możemy wywołać ją za pomocą app.cart
     },
 
