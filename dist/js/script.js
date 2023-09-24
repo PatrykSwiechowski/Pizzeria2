@@ -98,7 +98,7 @@
       thisProduct.initOrderForm();
       thisProduct.initAmountWidget();
       thisProduct.processOrder();
-      console.log('new Product:', thisProduct);
+      //console.log('new Product:', thisProduct);
     }
     renderInMenu(){
       const thisProduct = this;
@@ -283,8 +283,8 @@
       thisWidget.getElements(element);
       thisWidget.setValue(thisWidget.input.value || settings.amountWidget.defaultValue);
       thisWidget.initActions();
-      console.log('AmountWidget:', thisWidget);
-      console.log('contructor arguments:', element);
+      //console.log('AmountWidget:', thisWidget);
+      //console.log('contructor arguments:', element);
 
     }
 
@@ -333,7 +333,11 @@
     announce(){
       const thisWidget = this;
 
-      const event = new Event('updated');
+      const event = new CustomEvent('updated',{
+        bubbles: true
+      }
+        
+      );
       thisWidget.element.dispatchEvent(event);
     }
   }
@@ -356,7 +360,7 @@
       thisCart.dom = {}; // Tworzymy obiekt z elementami DOM od tej pory  w nim przechowujemy referencje do elementów DOM
       thisCart.dom.wrapper = element;
       thisCart.dom.toggleTrigger = document.querySelector(select.cart.toggleTrigger);
-      thisCart.dom.productList = document.querySelector(select.cart.productList);
+      thisCart.dom.productList = thisCart.dom.wrapper.querySelector(select.cart.productList);
       thisCart.dom.deliveryFee = thisCart.dom.wrapper.querySelector(select.cart.deliveryFee);
       thisCart.dom.subtotalPrice = thisCart.dom.wrapper.querySelector(select.cart.subtotalPrice);
       thisCart.dom.totalPrice = thisCart.dom.wrapper.querySelectorAll(select.cart.totalPrice);
@@ -367,7 +371,11 @@
       const thisCart = this;
       thisCart.dom.toggleTrigger.addEventListener('click', function(){
         thisCart.dom.wrapper.classList.toggle(classNames.cart.wrapperActive);
-      })
+      });
+        thisCart.dom.productList.addEventListener('updated', function(){
+          thisCart.update();
+        });
+      
     }
 
     add(menuProduct){ // wysyłanie produktów do koszyka
@@ -412,8 +420,11 @@
       //thisCart.dom.totalPrice.innerHTML = thisCart.totalPrice;
       thisCart.dom.deliveryFee.innerHTML = deliveryFee;
       for(let price of thisCart.dom.totalPrice){
+        //console.log(thisCart.dom.totalPrice);
+       //console.log(price);
         price.innerHTML = thisCart.totalPrice;
     }
+    
       }
     }
 
