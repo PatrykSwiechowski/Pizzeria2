@@ -77,6 +77,11 @@
       defaultDeliveryFee: 20,
     },
     // CODE ADDED END
+    db: {
+      url: '//localhost:3131',
+      products: 'products',
+      orders: 'orders',
+    },
   };
   
   const templates = {
@@ -366,6 +371,9 @@
       thisCart.dom.subtotalPrice = thisCart.dom.wrapper.querySelector(select.cart.subtotalPrice);
       thisCart.dom.totalPrice = thisCart.dom.wrapper.querySelectorAll(select.cart.totalPrice);
       thisCart.dom.totalNumber = thisCart.dom.wrapper.querySelector(select.cart.totalNumber);
+      thisCart.dom.form = thisCart.dom.wrapper.querySelector(select.cart.form);
+      thisCart.dom.address = thisCart.dom.wrapper.querySelector(select.cart.address);
+      thisCart.dom.phone = thisCart.dom.wrapper.querySelector(select.cart.phone);
     }
 
     initActions(){
@@ -379,8 +387,65 @@
       thisCart.dom.productList.addEventListener('remove', function(event){
         thisCart.remove(event.detail.cartProduct);
       });
+      thisCart.dom.form.addEventListener('submit', function(event){
+        event.preventDefault();
+        thisCart.sendOrder();
+      })
 
     }
+
+    sendOrder(){
+      const thisCart = this;
+
+      const url = settings.db.url + '/' + settings.db.orders; // endpoint do kolekcji order w app.json
+
+      const payload = { // obiekt z danymi ktory wysylamy do servera czyli do app.json "orders:"
+        address: thisCart.dom.address.value,
+        phone: thisCart.dom.phone.value,
+        totalPrice: thisCart.totalPrice,
+        subtotalPrice: thisCart.subtotalPrice,
+        totalNumber: thisCart.totalNumber,
+        deliveryFree: thisCart.deliveryFree,
+        products: [],
+      };
+      for(let product of thisCart.products){
+        payload.products.push(product.getData());
+      };
+
+      const options = {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      };
+      
+      fetch(url, options)
+      .then(function (response){
+        return response.json();
+      }).then(function (parsedResponse){
+        console.log('parsedResponse:', parsedResponse);
+      });
+    }
+  
+/*Podsumujmy teraz całość.
+
+Zaczynamy od stałej url, w której, podobnie jak wcześniej, umieszczamy adres endpointu.
+Tym razem będziemy się kontaktować z endopointem zamówienia (order).
+
+Następnie deklarujemy stałą payload, czyli ładunek.
+Tak bardzo często określa się dane, które będą wysłane do serwera.
+
+Kolejna stała – options – zawiera opcje, które skonfigurują zapytanie.
+Po pierwsze, musimy zmienić domyślną metodę GET na metodę POST, która służy do wysyłania nowych danych do API.
+Następnie musimy ustawić nagłówek, aby nasz serwer wiedział, że wysyłamy dane w postaci JSON-a.
+Ostatni z nagłówków to body, czyli treść, którą wysyłamy. Używamy tutaj metody JSON.stringify, aby przekonwertować obiekt payload na ciąg znaków w formacie JSON.
+Możesz zauważyć, że tym razem nie przypięliśmy do wywołania fetch żadnej funkcji w .then. Dlaczego?
+A czy musimy? Zauważ, że tak naprawdę teraz, nie odbieramy żadnych danych. Wręcz przeciwnie, to my je wysyłamy.
+Nie za bardzo więc obchodzi nas, co serwer zwróci jako odpowiedź.*/
+      
+
+    
 
     remove(cartProduct){ // cartProduct to ThisCartProduct
        const thisCart = this;
@@ -411,26 +476,26 @@
 
     update(){
       const thisCart = this;
-      const deliveryFee = settings.cart.defaultDeliveryFee;
-      let totalNumber = 0;
-      let subtotalPrice = 0;
+      thisCart.deliveryFree = settings.cart.defaultDeliveryFee;
+      thisCart.totalNumber = 0;
+      thisCart.subtotalPrice = 0;
 
       for(let product of thisCart.products){
-        totalNumber += product.amount;
-        subtotalPrice += product.price;
+        thisCart.totalNumber += product.amount;
+        thisCart.subtotalPrice += product.price;
       }
-      if(totalNumber !== 0){
-        thisCart.totalPrice = subtotalPrice + deliveryFee;
+      if(thisCart.totalNumber !== 0){
+        thisCart.totalPrice = thisCart.subtotalPrice + thisCart.deliveryFree;
       }else{
         thisCart.totalPrice = 0;
       }
 
-      console.log (deliveryFee, totalNumber, subtotalPrice, thisCart.totalPrice);
+      console.log (thisCart.deliveryFree, thisCart.totalNumber, thisCart.subtotalPrice, thisCart.totalPrice);
 
-      thisCart.dom.totalNumber.innerHTML = totalNumber;
-      thisCart.dom.subtotalPrice.innerHTML = subtotalPrice;
+      thisCart.dom.totalNumber.innerHTML = thisCart.totalNumber;
+      thisCart.dom.subtotalPrice.innerHTML = thisCart.subtotalPrice;
       //thisCart.dom.totalPrice.innerHTML = thisCart.totalPrice;
-      thisCart.dom.deliveryFee.innerHTML = deliveryFee;
+      thisCart.dom.deliveryFee.innerHTML = thisCart.deliveryFree;
       for(let price of thisCart.dom.totalPrice){
         //console.log(thisCart.dom.totalPrice);
        //console.log(price);
@@ -516,6 +581,21 @@
     });
 
   }
+
+  getData(){  // tworzenie obiektu z potrzebnymi właściwościami z instancji thisCartProduct, potrzebnymi w momencie zapisywania zamówienia 
+    const thisCartProduct = this;
+
+    const productCartSummary = {
+      id: thisCartProduct.id,
+      amount: thisCartProduct.amount,
+      price: thisCartProduct.price,
+      priceSingle: thisCartProduct.priceSingle,
+      name: thisCartProduct.name,
+      params: thisCartProduct.params,
+      
+    }
+    return productCartSummary;
+  }
 }
 
   
@@ -528,14 +608,29 @@
       console.log('thisApp.data', thisApp.data);
 
       for(let productData in thisApp.data.products){
-        new Product(productData, thisApp.data.products[productData]);
+        new Product(thisApp.data.products[productData].id, thisApp.data.products[productData]);
         //console.log(productData, thisApp.data.products[productData]); // pierwszy argument = dostęp do nazwy obiektu drugi argument = dostep do obiektu
       }
     },
 
     initData: function(){
       const thisApp = this;
-      thisApp.data = dataSource;
+      thisApp.data = {};
+      const url = settings.db.url + '/' + settings.db.products;
+
+      fetch(url) //Połącz się z adresem url przy użyciu metody fetch
+      .then(function(rawResponse){
+        return rawResponse.json(); // Jeśli połączenie się zakończy, to wtedy (pierwsze .then) skonwertuj dane do obiektu JS-owego.
+      })
+      .then(function(parsedResponse){
+        console.log('parsedResponse', parsedResponse); //Kiedy i ta operacja się zakończy, to wtedy (drugie .then) pokaż w konsoli te skonwertowane dane.
+      /* save parsedResponse as thisApp.data.products*/
+      thisApp.data.products = parsedResponse;
+      /*execute initMenu method*/
+      thisApp.initMenu();
+      })
+      
+      console.log('thisApp.data', JSON.stringify(thisApp.data));
     },
 
     initCart : function(){
@@ -555,7 +650,6 @@
       console.log('templates:', templates);
 
       thisApp.initData();
-      thisApp.initMenu();
       thisApp.initCart();
     },
   };
