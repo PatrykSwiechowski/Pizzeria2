@@ -1,10 +1,74 @@
 import {select, classNames, settings, templates } from "./settings.js";
 import Product from './compontents/Product.js';
 import Cart from './compontents/Cart.js';
+import Booking from "./compontents/Booking.js";
   
 
 
   const app = {
+    initPages: function(){ // jest uruchamiana w momemncie odświeżenia strony
+      const thisApp = this;
+
+      thisApp.pages = document.querySelector(select.containerOf.pages).children;
+      thisApp.navLinks = document.querySelectorAll(select.nav.links);
+
+      const idFromHash = window.location.hash.replace('#/', '');
+      console.log('idFromHash', idFromHash)
+
+      let pageMatchingHash = thisApp.pages[0].id;
+      for(let page of thisApp.pages){
+        if(page.id == idFromHash){
+          pageMatchingHash = page.id;
+          break;
+        }
+
+      }
+      console.log('pageMatchingHash'. pageMatchingHash);
+      thisApp.activePage(pageMatchingHash);
+
+
+      for(let link of thisApp.navLinks){
+        link.addEventListener('click', function(event){
+          const clickedElement = this;
+          event.preventDefault();
+
+          /* get page id from href attribute*/
+          const id = clickedElement.getAttribute('href').replace('#', '');
+          /* run thisApp.activePage with that id*/
+          thisApp.activePage(id); 
+
+          /*change URL hash*/
+          window.location.hash = '#/' + id; // slash zapobiega przesunieciu się strony, która po odświeżeniu przesuwa się do elememtu, któy ma id takie samo jak treść po znaku hash w adresie url strony
+        })
+      }
+    },
+
+    activePage: function(pageId){
+      const thisApp = this;
+
+      for(let page of thisApp.pages){
+        //if(page.id == pageId){
+          page.classList.toggle(classNames.pages.active, page.id == pageId); // drugi argument jest warunkiem czy id kliknietej strony jest równe id strony podanej w atrybucie metody
+        //}
+      }
+      for(let link of thisApp.navLinks){
+        link.classList.toggle(
+        classNames.nav.active, link.getAttribute('href') == '#' + pageId 
+        );
+      }
+      
+
+    },
+
+    initBooking: function(){
+      const thisApp = this;
+      
+      const bookingWrapper = document.querySelector(select.containerOf.booking);
+
+      thisApp.booking = new Booking(bookingWrapper);
+
+    },
+    
     initMenu: function(){
       const thisApp = this;
       console.log('thisApp.data', thisApp.data);
@@ -60,8 +124,11 @@ import Cart from './compontents/Cart.js';
       console.log('settings:', settings);
       console.log('templates:', templates);
 
+      thisApp.initPages();
+
       thisApp.initData();
       thisApp.initCart();
+      thisApp.initBooking();
     },
   };
 
