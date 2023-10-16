@@ -24,7 +24,7 @@ class AmountWidget extends BaseWidget{ // dziedziczenie klasy
       }
 
 
-    parsedValue(value){ // metoda będzie wykorzystywana do przekształcenia wartośći, którą chcemu ustawić na odpowiedni typ lub format
+    parseValue(value){ // metoda będzie wykorzystywana do przekształcenia wartośći, którą chcemu ustawić na odpowiedni typ lub format
       return parseInt(value); //to co wpisuje użytkownik jest tesktem wiec parsujemy to na liczby czyli typ danych int (intiger)
     }
 

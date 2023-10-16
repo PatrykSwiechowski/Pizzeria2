@@ -22,7 +22,7 @@ class BaseWidget{
         const thisWidget = this;
     
         //const newValue = parseInt(value);
-        const newValue = thisWidget.parsedValue(value);
+        const newValue = thisWidget.parseValue(value);
     
         // TODO: Add validation
         if(newValue != thisWidget.correctValue /*&& !isNaN(newValue)*/ && thisWidget.isValid(value))
@@ -42,7 +42,7 @@ class BaseWidget{
         thisWidget.value = value;
       }
 
-      parsedValue(value){ // metoda będzie wykorzystywana do przekształcenia wartośći, którą chcemu ustawić na odpowiedni typ lub format
+      parseValue(value){ // metoda będzie wykorzystywana do przekształcenia wartośći, którą chcemu ustawić na odpowiedni typ lub format
         return (value); //to co wpisuje użytkownik jest tesktem wiec parsujemy to na liczby czyli typ danych int (intiger)
       }
   
