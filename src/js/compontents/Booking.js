@@ -1,7 +1,8 @@
-import { templates, select } from "../settings.js";
+import { templates, select, settings } from "../settings.js";
 import AmountWidget from "./AmountWidget.js";
 import DatePicker from "./DatePicker.js";
 import HourPicker from "./HourPicker.js";
+import utils from "../utils.js";
 
 
 class Booking{
@@ -10,7 +11,45 @@ class Booking{
 
         thisBooking.render(element);
         thisBooking.initWidgets();
+        thisBooking.getData();
     }
+
+    //POBIERANIE DANYCH
+    getData(){
+       const thisBooking = this;
+       
+       const startDateParam = settings.db.dateStartParamKey + '=' + utils.dateToStr(thisBooking.datePicker.minDate); // w właściowści minDate, znajduje się obiekt daty,a nam jest potrzebna data zapisana jako tekst w odpowiednim formacie do tego użyjemy funkcji dateToStr()
+       const endDateParam = settings.db.dateEndParamKey + '=' + utils.dateToStr(thisBooking.datePicker.maxDate);
+        
+       const params = {
+            booking: [
+                startDateParam,
+                endDateParam,
+            ],
+            eventsCurrent: [
+                settings.db.notRepeatParam,
+                startDateParam,
+                endDateParam,
+
+            ],
+            eventsReapet:[
+                settings.db.repeatParam,
+                endDateParam,
+            ],
+        };
+        console.log('getData params', params, thisBooking);
+
+        const urls = {
+            booking:       settings.db.url + '/' + settings.db.bookings 
+                                           + '?' + params.booking.join('&'), // z obiektu params bierzemy właściwość booking która jest tablica i jej elementy mają zostać połączone za pomocą znaku '&'
+            eventsCurrent: settings.db.url + '/' + settings.db.events   
+                                           + '?' + params.eventsCurrent.join('&'),
+            eventsReapet:  settings.db.url + '/' + settings.db.events   
+                                           + '?' + params.eventsReapet.join('&'),
+        }
+        console.log(urls);
+    }
+
 
     render(element){
         const thisBooking = this;

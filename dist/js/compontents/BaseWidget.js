@@ -43,7 +43,7 @@ class BaseWidget{
       }
 
       parsedValue(value){ // metoda będzie wykorzystywana do przekształcenia wartośći, którą chcemu ustawić na odpowiedni typ lub format
-        return parseInt(value); //to co wpisuje użytkownik jest tesktem wiec parsujemy to na liczby czyli typ danych int (intiger)
+        return (value); //to co wpisuje użytkownik jest tesktem wiec parsujemy to na liczby czyli typ danych int (intiger)
       }
   
       isValid(value){ // domyślnie base widget korzysta z liczb więc sprawdzamy w tej metodzie tylko to czy ona nią jest
