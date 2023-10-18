@@ -12,6 +12,7 @@ class Booking{
         thisBooking.render(element);
         thisBooking.initWidgets();
         thisBooking.getData();
+        thisBooking.initTables();
     }
 
     //POBIERANIE DANYCH
@@ -181,7 +182,39 @@ class Booking{
         thisBooking.dom.hourPicker = thisBooking.dom.wrapper.querySelector(select.widgets.hourPicker.wrapper);
         
         thisBooking.dom.tables = thisBooking.dom.wrapper.querySelectorAll(select.booking.tables);
+        thisBooking.dom.floor - thisBooking.dom.wrapper.querySelector(select.booking.floor);
     }
+
+    initTables(){
+        const thisBooking = this;
+        thisBooking.dom.floor.addEventListener('click', function(event){
+            event.preventDefault();
+            const target = event.target
+            if(target.classList.contains('table')){
+                if(!target.classList.contains(classNames.booking.tableBooked)){
+                    for(let table of thisBooking.dom.tables){
+                        if((table.classList.contains(classNames.booking.selectedTable)) &&
+                        (table !== target)){
+                            table.classList.remove(classNames.booking.selectedTable)
+
+                        }
+                        if(target.classList.contains(classNames.booking.selectedTable)){
+                            target.classList.remove(classNames.booking.selectedTable)
+                        }else{
+                            target.classList.add(classNames.booking.selectedTable);
+
+                        }
+        
+                    } 
+                }
+
+                }
+
+        })
+
+        }
+
+      
 
     initWidgets(){
         const thisBooking = this;
@@ -212,6 +245,10 @@ class Booking{
 
         thisBooking.dom.wrapper.addEventListener('updated', function(){
             thisBooking.updateDOM();
+        })
+
+       thisBooking.dom.floor.addEventListener('click', function(event){
+            thisBooking.initTables(event);
         })
     }
 }
